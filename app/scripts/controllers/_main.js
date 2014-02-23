@@ -1,9 +1,10 @@
 'use strict';
 
-angular.module('angularBootstrapGruntBowerApp')
+angular.module('{{artifactId}}App')
   .controller('MainCtrl', function ($scope) {
     $scope.awesomeThings = [
-      'HTML5 Boilerplate',
+      'RESTX',
+      'Twitter Bootstrap',
       'AngularJS',
       'Karma'
     ];

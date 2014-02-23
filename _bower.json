@@ -1,5 +1,5 @@
 {
-  "name": "angular-bootstrap-grunt-bower",
+  "name": "{{artifactId}}",
   "version": "0.0.0",
   "dependencies": {
     "angular": "1.2.6",
@@ -23,7 +23,7 @@
     },
     "server": {
       "host": "localhost",
-      "port": 8080,
+      "port": {{defaultPort}},
       "context": "/api"
     }
   }
