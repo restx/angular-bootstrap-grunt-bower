@@ -1,4 +1,3 @@
-// Generated on 2014-02-23 using generator-angular 0.7.1
 'use strict';
 
 // # Globbing
@@ -15,20 +14,29 @@ module.exports = function (grunt) {
   // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
 
-  // Define the configuration for all the tasks
-  grunt.initConfig({
+    var proxyRequest = require('grunt-connect-proxy/lib/utils').proxyRequest,
+        resolvePath = require('path').resolve;
 
-    // Project settings
-    yeoman: {
-      // configurable paths
-      app: require('./bower.json').appPath || 'app',
-      dist: 'dist'
-    },
+    function mountFolder(connect, dir) {
+        return connect.static(resolvePath(dir));
+    }
+
+    // get build config from bower
+    // default values could be merged with an 'extend' function, but requiring underscore or a similar library just for
+    // that seems too heavyweight
+    var buildConfig = require('./bower.json').buildConfig || {};
+    buildConfig.layout = buildConfig.layout || {};
+    buildConfig.layout.app = buildConfig.layout.app || 'app';
+    buildConfig.layout.dist = buildConfig.layout.dist || 'dist';
+
+    // Define the configuration for all the tasks
+  grunt.initConfig({
+      layout: buildConfig.layout,
 
     // Watches files for changes and runs tasks based on the changed files
     watch: {
       js: {
-        files: ['<%= yeoman.app %>/scripts/{,*/}*.js'],
+        files: ['<%= layout.app %>/scripts/{,*/}*.js'],
         tasks: ['newer:jshint:all'],
         options: {
           livereload: true
@@ -39,7 +47,7 @@ module.exports = function (grunt) {
         tasks: ['newer:jshint:test', 'karma']
       },
       compass: {
-        files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}'],
+        files: ['<%= layout.app %>/styles/{,*/}*.{scss,sass}'],
         tasks: ['compass:server', 'autoprefixer']
       },
       gruntfile: {
@@ -50,9 +58,9 @@ module.exports = function (grunt) {
           livereload: '<%= connect.options.livereload %>'
         },
         files: [
-          '<%= yeoman.app %>/{,*/}*.html',
+          '<%= layout.app %>/{,*/}*.html',
           '.tmp/styles/{,*/}*.css',
-          '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+          '<%= layout.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
       }
     },
@@ -65,13 +73,30 @@ module.exports = function (grunt) {
         hostname: 'localhost',
         livereload: 35729
       },
+        proxies: buildConfig.server ? [
+            {
+                context: buildConfig.server.context,
+                host: buildConfig.server.host,
+                port: buildConfig.server.port,
+                https: buildConfig.server.https || false,
+                changeOrigin: false,
+                xforward: false
+            }
+        ] : [],
       livereload: {
         options: {
           open: true,
           base: [
             '.tmp',
-            '<%= yeoman.app %>'
-          ]
+            '<%= layout.app %>'
+          ],
+            middleware: function (connect) {
+                return [
+                    proxyRequest,
+                    mountFolder(connect, '.tmp'),
+                    mountFolder(connect, buildConfig.layout.app)
+                ];
+            }
         }
       },
       test: {
@@ -80,13 +105,13 @@ module.exports = function (grunt) {
           base: [
             '.tmp',
             'test',
-            '<%= yeoman.app %>'
+            '<%= layout.app %>'
           ]
         }
       },
       dist: {
         options: {
-          base: '<%= yeoman.dist %>'
+          base: '<%= layout.dist %>'
         }
       }
     },
@@ -99,7 +124,7 @@ module.exports = function (grunt) {
       },
       all: [
         'Gruntfile.js',
-        '<%= yeoman.app %>/scripts/{,*/}*.js'
+        '<%= layout.app %>/scripts/{,*/}*.js'
       ],
       test: {
         options: {
@@ -116,8 +141,8 @@ module.exports = function (grunt) {
           dot: true,
           src: [
             '.tmp',
-            '<%= yeoman.dist %>/*',
-            '!<%= yeoman.dist %>/.git*'
+            '<%= layout.dist %>/*',
+            '!<%= layout.dist %>/.git*'
           ]
         }]
       },
@@ -142,8 +167,8 @@ module.exports = function (grunt) {
     // Automatically inject Bower components into the app
     'bower-install': {
       app: {
-        html: '<%= yeoman.app %>/index.html',
-        ignorePath: '<%= yeoman.app %>/'
+        html: '<%= layout.app %>/index.html',
+        ignorePath: '<%= layout.app %>/'
       }
     },
 
@@ -153,13 +178,13 @@ module.exports = function (grunt) {
     // Compiles Sass to CSS and generates necessary files if requested
     compass: {
       options: {
-        sassDir: '<%= yeoman.app %>/styles',
+        sassDir: '<%= layout.app %>/styles',
         cssDir: '.tmp/styles',
         generatedImagesDir: '.tmp/images/generated',
-        imagesDir: '<%= yeoman.app %>/images',
-        javascriptsDir: '<%= yeoman.app %>/scripts',
-        fontsDir: '<%= yeoman.app %>/styles/fonts',
-        importPath: '<%= yeoman.app %>/bower_components',
+        imagesDir: '<%= layout.app %>/images',
+        javascriptsDir: '<%= layout.app %>/scripts',
+        fontsDir: '<%= layout.app %>/styles/fonts',
+        importPath: '<%= layout.app %>/bower_components',
         httpImagesPath: '/images',
         httpGeneratedImagesPath: '/images/generated',
         httpFontsPath: '/styles/fonts',
@@ -169,7 +194,7 @@ module.exports = function (grunt) {
       },
       dist: {
         options: {
-          generatedImagesDir: '<%= yeoman.dist %>/images/generated'
+          generatedImagesDir: '<%= layout.dist %>/images/generated'
         }
       },
       server: {
@@ -184,10 +209,10 @@ module.exports = function (grunt) {
       dist: {
         files: {
           src: [
-            '<%= yeoman.dist %>/scripts/{,*/}*.js',
-            '<%= yeoman.dist %>/styles/{,*/}*.css',
-            '<%= yeoman.dist %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}',
-            '<%= yeoman.dist %>/styles/fonts/*'
+            '<%= layout.dist %>/scripts/{,*/}*.js',
+            '<%= layout.dist %>/styles/{,*/}*.css',
+            '<%= layout.dist %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}',
+            '<%= layout.dist %>/styles/fonts/*'
           ]
         }
       }
@@ -197,18 +222,18 @@ module.exports = function (grunt) {
     // concat, minify and revision files. Creates configurations in memory so
     // additional tasks can operate on them
     useminPrepare: {
-      html: '<%= yeoman.app %>/index.html',
+      html: '<%= layout.app %>/index.html',
       options: {
-        dest: '<%= yeoman.dist %>'
+        dest: '<%= layout.dist %>'
       }
     },
 
     // Performs rewrites based on rev and the useminPrepare configuration
     usemin: {
-      html: ['<%= yeoman.dist %>/{,*/}*.html'],
-      css: ['<%= yeoman.dist %>/styles/{,*/}*.css'],
+      html: ['<%= layout.dist %>/{,*/}*.html'],
+      css: ['<%= layout.dist %>/styles/{,*/}*.css'],
       options: {
-        assetsDirs: ['<%= yeoman.dist %>']
+        assetsDirs: ['<%= layout.dist %>']
       }
     },
 
@@ -217,9 +242,9 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: '<%= yeoman.app %>/images',
+          cwd: '<%= layout.app %>/images',
           src: '{,*/}*.{png,jpg,jpeg,gif}',
-          dest: '<%= yeoman.dist %>/images'
+          dest: '<%= layout.dist %>/images'
         }]
       }
     },
@@ -227,9 +252,9 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: '<%= yeoman.app %>/images',
+          cwd: '<%= layout.app %>/images',
           src: '{,*/}*.svg',
-          dest: '<%= yeoman.dist %>/images'
+          dest: '<%= layout.dist %>/images'
         }]
       }
     },
@@ -243,9 +268,9 @@ module.exports = function (grunt) {
         },
         files: [{
           expand: true,
-          cwd: '<%= yeoman.dist %>',
+          cwd: '<%= layout.dist %>',
           src: ['*.html', 'views/{,*/}*.html'],
-          dest: '<%= yeoman.dist %>'
+          dest: '<%= layout.dist %>'
         }]
       }
     },
@@ -266,7 +291,7 @@ module.exports = function (grunt) {
     // Replace Google CDN references
     cdnify: {
       dist: {
-        html: ['<%= yeoman.dist %>/*.html']
+        html: ['<%= layout.dist %>/*.html']
       }
     },
 
@@ -276,8 +301,8 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           dot: true,
-          cwd: '<%= yeoman.app %>',
-          dest: '<%= yeoman.dist %>',
+          cwd: '<%= layout.app %>',
+          dest: '<%= layout.dist %>',
           src: [
             '*.{ico,png,txt}',
             '.htaccess',
@@ -290,13 +315,13 @@ module.exports = function (grunt) {
         }, {
           expand: true,
           cwd: '.tmp/images',
-          dest: '<%= yeoman.dist %>/images',
+          dest: '<%= layout.dist %>/images',
           src: ['generated/*']
         }]
       },
       styles: {
         expand: true,
-        cwd: '<%= yeoman.app %>/styles',
+        cwd: '<%= layout.app %>/styles',
         dest: '.tmp/styles/',
         src: '{,*/}*.css'
       }
@@ -323,9 +348,9 @@ module.exports = function (grunt) {
     // cssmin: {
     //   dist: {
     //     files: {
-    //       '<%= yeoman.dist %>/styles/main.css': [
+    //       '<%= layout.dist %>/styles/main.css': [
     //         '.tmp/styles/{,*/}*.css',
-    //         '<%= yeoman.app %>/styles/{,*/}*.css'
+    //         '<%= layout.app %>/styles/{,*/}*.css'
     //       ]
     //     }
     //   }
@@ -333,8 +358,8 @@ module.exports = function (grunt) {
     // uglify: {
     //   dist: {
     //     files: {
-    //       '<%= yeoman.dist %>/scripts/scripts.js': [
-    //         '<%= yeoman.dist %>/scripts/scripts.js'
+    //       '<%= layout.dist %>/scripts/scripts.js': [
+    //         '<%= layout.dist %>/scripts/scripts.js'
     //       ]
     //     }
     //   }
@@ -363,6 +388,7 @@ module.exports = function (grunt) {
       'bower-install',
       'concurrent:server',
       'autoprefixer',
+      'configureProxies',
       'connect:livereload',
       'watch'
     ]);
